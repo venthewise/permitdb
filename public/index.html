@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Permit Batch Search</title>
+<style>
+  body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f4f9; margin: 0; padding: 20px; }
+  .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; max-width: 500px; width: 100%; }
+  textarea, input { font-size: 14px; padding: 10px; margin-bottom: 20px; width: 95%; border: 1px solid #ccc; border-radius: 4px; }
+  button { font-size: 16px; padding: 10px 20px; color: white; background-color: #6a4bff; border: none; border-radius: 4px; cursor: pointer; }
+  button:hover { background-color: #5237d8; }
+  #status, #loginError, #error { font-size: 14px; margin-top: 10px; color: #555; }
+  #loginError, #error { color: red; }
+  #downloadBtn { display: none; margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  #downloadBtn:hover { background-color: #218838; }
+</style>
+</head>
+<body>
+
+<div class="container" id="loginContainer">
+  <h1>Login</h1>
+  <div id="loginError"></div>
+  <input type="text" id="username" placeholder="Username" /><br>
+  <input type="password" id="password" placeholder="Password" /><br>
+  <button id="loginBtn">Login</button>
+</div>
+
+<div class="container" id="permitContainer" style="display:none;">
+  <h1>Clearwater Permit Batch Search</h1>
+  <p>Paste up to 100 permit numbers below, one per line.</p>
+  <div id="error"></div>
+  <form id="permitForm">
+    <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..." required></textarea>
+    <br>
+    <button type="submit">Generate CSV Report</button>
+  </form>
+  <div id="status"></div>
+  <button id="downloadBtn">Download CSV</button>
+</div>
+
+<script>
+let authToken = null;
+
+// --- LOGIN ---
+const loginContainer = document.getElementById('loginContainer');
+const permitContainer = document.getElementById('permitContainer');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
+
+loginBtn.addEventListener('click', async () => {
+  loginError.textContent = '';
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    authToken = data.token;
+    loginContainer.style.display = 'none';
+    permitContainer.style.display = 'block';
+  } catch (err) {
+    loginError.textContent = err.message;
+  }
+});
+
+// --- PERMIT FORM ---
+const form = document.getElementById('permitForm');
+const textarea = document.getElementById('permitNumbersInput');
+const statusEl = document.getElementById('status');
+const errorEl = document.getElementById('error');
+const downloadBtn = document.getElementById('downloadBtn');
+
+const permitPattern = /^BCP\d{4}-\d{6}$/;
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorEl.textContent = '';
+  statusEl.textContent = '';
+  downloadBtn.style.display = 'none';
+
+  const rawInput = textarea.value.trim();
+  if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; return; }
+
+  const permits = rawInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const invalids = permits.filter(p => !permitPattern.test(p));
+  if (invalids.length > 0) { errorEl.textContent = `Invalid permit number(s): ${invalids.join(', ')}`; return; }
+
+  statusEl.textContent = 'Submitting permits…';
+
+  try {
+    const response = await fetch('/api/submitPermits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+      body: JSON.stringify({ permits })
+    });
+
+    if (!response.ok) throw new Error('Workflow request failed.');
+    const blob = await response.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+    downloadBtn.style.display = 'inline-block';
+    downloadBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'permit_report.csv';
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+    };
+    statusEl.textContent = 'Report ready. Click below to download.';
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Error: ' + err.message;
+  }
+});
+</script>
+
+</body>
+</html>
