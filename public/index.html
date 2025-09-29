@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ai8mations Permit Batch Tool</title>
+<title>Clearwater Permit Batch Tool</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  /* --- Base --- */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Roboto Mono', monospace;
-    background-color: rgba(30, 41, 59, 0.8); /* bg-slate-800/50 */
+    background-color: rgba(30, 41, 59, 0.8);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
     min-height: 100vh;
     color: #fff;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 50px; /* for footer */
   }
   .container {
     background-color: rgba(30, 41, 59, 0.95);
@@ -26,29 +27,23 @@
     text-align: center;
     position: relative;
   }
-
-  /* --- Header --- */
   h1#headerTitle {
     font-size: 2.5rem;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-weight: bold;
   }
-  h1#headerTitle span#blueEight { color: #3b82f6; } /* bright blue for 8 */
-
-  /* --- Inputs & Textarea --- */
+  h1#headerTitle span#blueEight { color: #3b82f6; } 
   input, textarea {
     font-family: 'Roboto Mono', monospace;
     width: 95%;
     padding: 12px;
     margin-bottom: 20px;
-    border: 1px solid #374151; /* slate-700 */
+    border: 1px solid #374151;
     border-radius: 6px;
-    background-color: #1e293b; /* slate-800 */
-    color: #f9fafb; /* slate-50 */
+    background-color: #1e293b;
+    color: #f9fafb;
   }
   textarea { min-height: 200px; resize: vertical; }
-
-  /* --- Buttons --- */
   button {
     font-family: 'Roboto Mono', monospace;
     padding: 10px 25px;
@@ -58,52 +53,38 @@
     font-weight: bold;
     transition: all 0.2s ease;
   }
-  button#loginBtn, button[type="submit"] {
-    background-color: #3b82f6; 
-    color: #fff;
-  }
+  button#loginBtn, button[type="submit"] { background-color: #3b82f6; color: #fff; }
   button#loginBtn:hover, button[type="submit"]:hover { background-color: #2563eb; }
-
-  button#downloadBtn {
-    display: none;
-    background-color: #10b981; /* green-500 */
-    color: #fff;
-  }
+  button#downloadBtn { display: none; background-color: #10b981; color: #fff; margin-top: 10px; }
   button#downloadBtn:hover { background-color: #059669; }
-
   button#logoutBtn {
-    background-color: #ef4444; /* red-500 */
-    color: #fff;
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    background-color: #ef4444; color: #fff;
+    position: absolute; top: 20px; right: 20px;
   }
   button#logoutBtn:hover { background-color: #dc2626; }
-
-  /* --- Messages --- */
-  #status, #loginError, #error {
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  #loginError, #error { color: #f87171; } /* red-400 */
-  #status { color: #60a5fa; } /* blue-400 */
-
-  /* --- Footer --- */
+  #status, #loginError, #error { font-size: 14px; margin-top: 10px; }
+  #loginError, #error { color: #f87171; }
+  #status { color: #60a5fa; display: flex; align-items: center; justify-content: center; }
   footer {
-    margin-top: 20px;
-    font-size: 12px;
-    color: #9ca3af; /* gray-400 */
+    font-size: 12px; color: #9ca3af; position: fixed; bottom: 10px; text-align: center; width: 100%;
   }
-
-  /* --- Responsive --- */
-  @media(max-width: 600px) {
-    .container { padding: 30px; }
-    h1#headerTitle { font-size: 2rem; }
+  .quick-guide { text-align: left; margin-bottom: 20px; font-size: 13px; color: #cbd5e1; }
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
   }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div class="container" id="loginContainer">
   <h1 id="headerTitle">ai<span id="blueEight">8</span>mations</h1>
   <div id="loginError"></div>
@@ -112,20 +93,32 @@
   <button id="loginBtn">Login</button>
 </div>
 
+<!-- PERMIT FORM -->
 <div class="container" id="permitContainer" style="display:none;">
   <button id="logoutBtn">Logout</button>
-  <h1 id="headerTitle">ai<span id="blueEight">8</span>mations</h1>
+  <h1 id="headerTitle">Clearwater Permit Search</h1>
   <p>Paste up to 100 permit numbers below, one per line.</p>
   <div id="error"></div>
   <form id="permitForm">
     <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..." required></textarea>
     <br>
+    <div class="quick-guide">
+      <strong>Quick Guide:</strong>
+      <ol>
+        <li>Enter one permit number per line in the correct format (e.g., BCP2025-090123).</li>
+        <li>Do not include extra spaces or special characters.</li>
+        <li>You can enter up to 100 permit numbers at once.</li>
+        <li>Click "Generate CSV Report" to submit the permits.</li>
+        <li>Once processing is complete, click "Download CSV" to save your report.</li>
+      </ol>
+    </div>
     <button type="submit">Generate CSV Report</button>
   </form>
   <div id="status"></div>
   <button id="downloadBtn">Download CSV</button>
-  <footer>Made by @venthewise</footer>
 </div>
+
+<footer>Made by @venthewise</footer>
 
 <script>
 let authToken = null;
@@ -182,17 +175,15 @@ const permitPattern = /^BCP\d{4}-\d{6}$/;
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   errorEl.textContent = '';
-  statusEl.textContent = '';
+  statusEl.innerHTML = '<span class="spinner"></span>Submitting permits…';
   downloadBtn.style.display = 'none';
 
   const rawInput = textarea.value.trim();
-  if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; return; }
+  if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; statusEl.textContent = ''; return; }
 
   const permits = rawInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const invalids = permits.filter(p => !permitPattern.test(p));
-  if (invalids.length > 0) { errorEl.textContent = `Invalid permit number(s): ${invalids.join(', ')}`; return; }
-
-  statusEl.textContent = 'Submitting permits…';
+  if (invalids.length > 0) { errorEl.textContent = `Invalid permit number(s): ${invalids.join(', ')}`; statusEl.textContent = ''; return; }
 
   try {
     const response = await fetch('/api/submitPermits', {
@@ -216,6 +207,7 @@ form.addEventListener('submit', async (e) => {
   } catch (err) {
     console.error(err);
     errorEl.textContent = 'Error: ' + err.message;
+    statusEl.textContent = '';
   }
 });
 </script>
