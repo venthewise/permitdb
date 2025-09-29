@@ -12,10 +12,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* vertical centering */
+    justify-content: center;
     min-height: 100vh;
     padding: 40px 20px;
     color: #fff;
+    transition: background 0.5s ease;
   }
 
   #pageWrapper {
@@ -24,9 +25,17 @@
     align-items: center;
     justify-content: center;
     width: 100%;
+    transition: justify-content 0.5s ease;
   }
 
-  /* VIDEO */
+  /* LOGIN VIDEO & WRAPPER */
+  #loginContainerWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+  }
   #videoWrapper {
     width: 100%;
     max-width: 550px;
@@ -156,21 +165,22 @@
 
 <div id="pageWrapper">
 
-  <!-- LOGIN VIDEO -->
-  <div id="videoWrapper">
-    <video autoplay muted loop playsinline id="loginVideo">
-      <source src="/ai8.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
+  <!-- LOGIN VIDEO & FORM -->
+  <div id="loginContainerWrapper">
+    <div id="videoWrapper">
+      <video autoplay muted loop playsinline id="loginVideo">
+        <source src="/ai8.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
 
-  <!-- LOGIN -->
-  <div class="container" id="loginContainer">
-    <h1 id="loginHeader">ai<span id="blueEight">8</span>mations</h1>
-    <div id="loginError"></div>
-    <input type="text" id="username" placeholder="Username" /><br>
-    <input type="password" id="password" placeholder="Password" /><br>
-    <button id="loginBtn">Login</button>
+    <div class="container" id="loginContainer">
+      <h1 id="loginHeader">ai<span id="blueEight">8</span>mations</h1>
+      <div id="loginError"></div>
+      <input type="text" id="username" placeholder="Username" /><br>
+      <input type="password" id="password" placeholder="Password" /><br>
+      <button id="loginBtn">Login</button>
+    </div>
   </div>
 
   <!-- PERMIT FORM -->
@@ -202,49 +212,71 @@
 <button id="logoutBtn" style="display:none;">Logout</button>
 
 <script>
-// --- LOGIN ---
 let authToken = null;
+
+// Elements
+const loginContainerWrapper = document.getElementById('loginContainerWrapper');
 const loginContainer = document.getElementById('loginContainer');
 const permitContainer = document.getElementById('permitContainer');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const pageWrapper = document.getElementById('pageWrapper');
 
-loginBtn.addEventListener('click', async () => {
+// --- LOGIN FUNCTION ---
+function performLogin() {
   loginError.textContent = '';
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  if (!username || !password) { loginError.textContent = 'Please enter username and password.'; return; }
+
+  fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
     authToken = data.token;
-    loginContainer.style.display = 'none';
-    permitContainer.style.display = 'block';
-    logoutBtn.style.display = 'block';
-    document.getElementById('pageWrapper').style.justifyContent = 'flex-start';
-  } catch (err) {
-    loginError.textContent = err.message;
-  }
+
+    // Fade out login + video
+    loginContainerWrapper.style.transition = 'opacity 0.5s ease';
+    loginContainerWrapper.style.opacity = '0';
+    setTimeout(() => {
+      loginContainerWrapper.style.display = 'none';
+      permitContainer.style.display = 'block';
+      logoutBtn.style.display = 'block';
+      pageWrapper.style.justifyContent = 'flex-start';
+    }, 500);
+  })
+  .catch(err => { loginError.textContent = err.message; });
+}
+
+// --- LOGIN BUTTON & ENTER KEY ---
+loginBtn.addEventListener('click', performLogin);
+[usernameInput, passwordInput].forEach(input => {
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') { e.preventDefault(); performLogin(); }
+  });
 });
 
 // --- LOGOUT ---
 logoutBtn.addEventListener('click', () => {
   authToken = null;
   permitContainer.style.display = 'none';
-  loginContainer.style.display = 'block';
+  loginContainerWrapper.style.display = 'flex';
+  loginContainerWrapper.style.opacity = '1';
   logoutBtn.style.display = 'none';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
+  usernameInput.value = '';
+  passwordInput.value = '';
   document.getElementById('permitNumbersInput').value = '';
   document.getElementById('status').textContent = '';
   document.getElementById('error').textContent = '';
   document.getElementById('downloadBtn').style.display = 'none';
-  document.getElementById('pageWrapper').style.justifyContent = 'center';
+  pageWrapper.style.justifyContent = 'center';
 });
 
 // --- PERMIT FORM ---
@@ -255,7 +287,7 @@ const errorEl = document.getElementById('error');
 const downloadBtn = document.getElementById('downloadBtn');
 const permitPattern = /^BCP\d{4}-\d{6}$/;
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', async e => {
   e.preventDefault();
   errorEl.textContent = '';
   statusEl.innerHTML = '<span class="spinner"></span>Submitting permits…';
