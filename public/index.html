@@ -186,16 +186,15 @@
   <!-- PERMIT FORM -->
   <div class="container" id="permitContainer" style="display:none;">
     <h1 id="permitHeader">Clearwater Permit Search</h1>
-    <p>Paste up to 100 permit numbers below, one per line.</p>
+    <p>Paste permit numbers below, one per line.</p>
     <div id="error"></div>
     <form id="permitForm">
-      <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..." required></textarea>
+      <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..."></textarea>
       <div class="quick-guide">
         <strong>Quick Guide:</strong>
         <ol>
-          <li>Enter one permit number per line in the correct format (e.g., BCP2025-090123).</li>
-          <li>Do not include extra spaces or special characters.</li>
-          <li>You can enter up to 100 permit numbers at once.</li>
+          <li>Enter one permit number per line.</li>
+          <li>You can paste up to 100 lines at once.</li>
           <li>Click "Generate CSV Report" to submit the permits.</li>
           <li>Once processing is complete, click "Download CSV" to save your report.</li>
         </ol>
@@ -216,7 +215,6 @@ let authToken = null;
 
 // Elements
 const loginContainerWrapper = document.getElementById('loginContainerWrapper');
-const loginContainer = document.getElementById('loginContainer');
 const permitContainer = document.getElementById('permitContainer');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
@@ -285,7 +283,6 @@ const textarea = document.getElementById('permitNumbersInput');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const downloadBtn = document.getElementById('downloadBtn');
-const permitPattern = /^BCP\d{4}-\d{6}$/;
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
@@ -296,9 +293,8 @@ form.addEventListener('submit', async e => {
   const rawInput = textarea.value.trim();
   if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; statusEl.textContent = ''; return; }
 
+  // Accept all input lines without validation
   const permits = rawInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  const invalids = permits.filter(p => !permitPattern.test(p));
-  if (invalids.length > 0) { errorEl.textContent = `Invalid permit number(s): ${invalids.join(', ')}`; statusEl.textContent = ''; return; }
 
   try {
     const response = await fetch('/api/submitPermits', {
@@ -309,6 +305,7 @@ form.addEventListener('submit', async e => {
     if (!response.ok) throw new Error('Workflow request failed.');
     const blob = await response.blob();
     const downloadUrl = URL.createObjectURL(blob);
+
     downloadBtn.style.display = 'inline-block';
     downloadBtn.onclick = () => {
       const a = document.createElement('a');
@@ -317,6 +314,7 @@ form.addEventListener('submit', async e => {
       a.click();
       URL.revokeObjectURL(downloadUrl);
     };
+
     statusEl.textContent = 'Report ready. Click below to download.';
   } catch (err) {
     console.error(err);
