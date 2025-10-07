@@ -8,14 +8,14 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
+    background: white;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     padding: 40px 20px;
-    color: #fff;
+    color: #000;
     transition: background 0.5s ease;
   }
 
@@ -28,7 +28,7 @@
     transition: justify-content 0.5s ease;
   }
 
-  /* LOGIN VIDEO & WRAPPER */
+  /* LOGIN IMAGE & WRAPPER */
   #loginContainerWrapper {
     display: flex;
     flex-direction: column;
@@ -36,16 +36,17 @@
     justify-content: center;
     transition: opacity 0.5s ease;
   }
-  #videoWrapper {
+  #imageWrapper {
     width: 100%;
     max-width: 550px;
     height: 320px;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
   }
-  #loginVideo {
+  #loginImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -53,16 +54,17 @@
   }
 
   .container {
-    background-color: rgba(30, 41, 59, 0.95);
+    background-color: rgba(255, 255, 255, 0.95);
     padding: 40px;
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 550px;
     text-align: center;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
   }
   .container:hover {
     transform: translateY(-3px);
@@ -80,10 +82,10 @@
     width: 100%;
     padding: 12px;
     margin-bottom: 20px;
-    border: 1px solid #374151;
+    border: 1px solid #d1d5db;
     border-radius: 6px;
-    background-color: #1e293b;
-    color: #f9fafb;
+    background-color: #f9fafb;
+    color: #111827;
     font-size: 14px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
@@ -131,7 +133,7 @@
     text-align: left;
     margin-bottom: 20px;
     font-size: 13px;
-    color: #cbd5e1;
+    color: #6b7280;
     max-width: 100%;
     padding-left: 5px;
   }
@@ -151,16 +153,17 @@
 
   /* LOCATION CARDS */
   .location-card {
-    background-color: rgba(30, 41, 59, 0.95);
+    background-color: rgba(255, 255, 255, 0.95);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin: 10px;
     text-align: center;
     font-weight: 500;
     min-width: 150px;
+    border: 1px solid #e5e7eb;
   }
   .location-card:hover {
     transform: translateY(-3px);
@@ -190,7 +193,7 @@
   /* FOOTER */
   footer {
     font-size: 12px;
-    color: #9ca3af;
+    color: #6b7280;
     text-align: center;
   }
 
@@ -204,13 +207,10 @@
 
 <div id="pageWrapper">
 
-  <!-- LOGIN VIDEO & FORM -->
+  <!-- LOGIN IMAGE & FORM -->
   <div id="loginContainerWrapper">
-    <div id="videoWrapper">
-      <video autoplay muted loop playsinline id="loginVideo">
-        <source src="/ai8.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
+    <div id="imageWrapper">
+      <img src="/hbw.png" alt="HBW" id="loginImage">
     </div>
 
     <div class="container" id="loginContainer">
