@@ -158,7 +158,13 @@
     const webhookURL = 'https://n8n.ai8mations.com/webhook/polkcounty';
 
     document.getElementById('backBtn').addEventListener('click', () => {
-      window.location.href = '/';
+      if (isProcessing) {
+        if (confirm('A report is currently being generated. Are you sure you want to leave? The generation will be cancelled.')) {
+          window.location.href = '/';
+        }
+      } else {
+        window.location.href = '/';
+      }
     });
 
     window.addEventListener('beforeunload', (e) => {
