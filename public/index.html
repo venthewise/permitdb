@@ -263,6 +263,16 @@ const passwordInput = document.getElementById('password');
 const pageWrapper = document.getElementById('pageWrapper');
 const locationCards = document.querySelectorAll('.location-card');
 
+// Check for existing auth token on page load
+const storedToken = localStorage.getItem('authToken');
+if (storedToken) {
+  authToken = storedToken;
+  loginContainerWrapper.style.display = 'none';
+  locationsContainer.style.display = 'block';
+  logoutBtn.style.display = 'block';
+  pageWrapper.style.justifyContent = 'flex-start';
+}
+
 // --- LOGIN FUNCTION ---
 function performLogin() {
   loginError.textContent = '';
