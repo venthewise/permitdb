@@ -4,202 +4,163 @@
   <meta charset="UTF-8" />
   <title>Permit Batch Search</title>
   <style>
-   * { box-sizing: border-box; margin: 0; padding: 0; }
-   body {
-     font-family: 'Inter', sans-serif;
-     background: white;
-     display: flex;
-     flex-direction: column;
-     align-items: center;
-     justify-content: center;
-     min-height: 100vh;
-     padding: 40px 20px;
-     color: #000;
-   }
-
-   .container {
-     background-color: rgba(255, 255, 255, 0.95);
-     padding: 40px;
-     border-radius: 12px;
-     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-     width: 100%;
-     max-width: 550px;
-     text-align: center;
-     position: relative;
-     transition: transform 0.3s ease, box-shadow 0.3s ease;
-     margin-bottom: 20px;
-     border: 1px solid #e5e7eb;
-   }
-   .container:hover {
-     transform: translateY(-3px);
-     box-shadow: 0 12px 25px rgba(0,0,0,0.6);
-   }
-
-   /* HEADERS */
-   h1 { font-size: 1.5rem; margin-bottom: 15px; font-weight: 600; }
-
-   /* INPUTS */
-   input, textarea {
-     font-family: 'Inter', sans-serif;
-     width: 100%;
-     padding: 12px;
-     margin-bottom: 20px;
-     border: 1px solid #d1d5db;
-     border-radius: 6px;
-     background-color: #f9fafb;
-     color: #111827;
-     font-size: 14px;
-     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-   }
-   input:focus, textarea:focus {
-     border-color: #3b82f6;
-     box-shadow: 0 0 5px #3b82f6;
-     outline: none;
-   }
-   textarea { min-height: 180px; resize: vertical; }
-
-   /* BUTTONS */
-   button {
-     font-family: 'Inter', sans-serif;
-     padding: 10px 25px;
-     border: none;
-     border-radius: 6px;
-     cursor: pointer;
-     font-weight: 500;
-     transition: all 0.3s ease;
-   }
-   button[type="submit"] { background-color: #3b82f6; color: #fff; }
-   button[type="submit"]:hover { background-color: #2563eb; transform: scale(1.03); }
-   button#downloadBtn { display: none; background-color: #10b981; color: #fff; margin-top: 10px; }
-   button#downloadBtn:hover { background-color: #059669; transform: scale(1.03); }
-
-   /* MESSAGES */
-   #status, #error { font-size: 14px; margin-top: 10px; }
-   #error { color: #f87171; }
-   #status { color: #60a5fa; display: flex; align-items: center; justify-content: center; }
-
-   /* QUICK GUIDE */
-   .quick-guide {
-     text-align: left;
-     margin-bottom: 20px;
-     font-size: 13px;
-     color: #6b7280;
-     max-width: 100%;
-     padding-left: 5px;
-   }
-
-   /* SPINNER */
-   .spinner {
-     border: 4px solid rgba(255, 255, 255, 0.2);
-     border-top: 4px solid #3b82f6;
-     border-radius: 50%;
-     width: 18px;
-     height: 18px;
-     margin-right: 10px;
-     animation: spin 1s linear infinite;
-     display: inline-block;
-   }
-   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-   footer {
-     font-size: 14px;
-     color: #353b47;
-     text-align: center;
-   }
-
-   /* BACK BUTTON */
-   button#backBtn {
-     background-color: #6b7280;
-     color: #fff;
-     position: fixed;
-     top: 20px;
-     left: 20px;
-     z-index: 10;
-     transition: transform 0.2s ease, background-color 0.2s ease;
-   }
-   button#backBtn:hover { background-color: #4b5563; transform: scale(1.05); }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+    textarea {
+      font-size: 14px;
+      padding: 10px;
+      margin-bottom: 20px;
+      width: 95%;
+      min-height: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      color: white;
+      background-color: #6a4bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #5237d8; }
+    p { color: #555; }
+    #status { margin-top: 20px; font-size: 14px; color: #555; }
+    #downloadBtn {
+      display: none;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #downloadBtn:hover { background-color: #218838; }
+    #error { color: red; margin-bottom: 10px; font-size: 14px; }
+    #backBtn {
+      background-color: #6b7280;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    #backBtn:hover { background-color: #4b5563; }
+    .quick-guide {
+      text-align: left;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #6b7280;
+      max-width: 100%;
+      padding-left: 5px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Hillsborough Permit Search</h1>
+    <button id="backBtn">Back to Locations</button>
+    <h1>Hillsborough Permit Batch Search</h1>
     <p>Paste permit numbers below, one per line.</p>
+
     <div id="error"></div>
+
     <form id="permitForm">
-      <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..."></textarea>
+      <textarea id="permitNumbersInput" name="permitNumbers"
+        placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..." required></textarea>
       <div class="quick-guide">
         <strong>Quick Guide:</strong>
         <ol>
           <li>Enter one permit number per line.</li>
-          <li>Each permit number report takes an average of 30seconds. Take that into consideration.</li>
+          <li>You can paste up to 100 lines at once.</li>
           <li>Click "Generate CSV Report" to submit the permits.</li>
           <li>Once processing is complete, click "Download CSV" to save your report.</li>
         </ol>
       </div>
       <button type="submit">Generate CSV Report</button>
     </form>
+
     <div id="status"></div>
     <button id="downloadBtn">Download CSV</button>
   </div>
 
-  <footer>ai System Made by ai8mations.</footer>
-  <button id="backBtn">Back to Locations</button>
   <script>
-    let isProcessing = false;
+    if (!localStorage.getItem('authToken')) {
+      window.location.href = '../index.html';
+    }
 
     const form = document.getElementById('permitForm');
     const textarea = document.getElementById('permitNumbersInput');
     const statusEl = document.getElementById('status');
     const errorEl = document.getElementById('error');
     const downloadBtn = document.getElementById('downloadBtn');
+    const backBtn = document.getElementById('backBtn');
 
-    const authToken = localStorage.getItem('authToken');
-
-    document.getElementById('backBtn').addEventListener('click', () => {
-      if (isProcessing) {
-        if (confirm('A report is currently being generated. Are you sure you want to leave? The generation will be cancelled.')) {
-          window.location.href = '/';
-        }
-      } else {
-        window.location.href = '/';
-      }
+    backBtn.addEventListener('click', () => {
+      window.location.href = '../index.html';
     });
 
-    window.addEventListener('beforeunload', (e) => {
-      if (isProcessing) {
-        e.preventDefault();
-        e.returnValue = 'A report is currently being generated. Are you sure you want to leave?';
-      }
-    });
+    // Change this to your running workflow's webhook URL
+    const webhookURL = 'https://n8n.ai8mations.com/webhook/hillsborough';
 
-    form.addEventListener('submit', async e => {
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorEl.textContent = '';
-      statusEl.innerHTML = '<span class="spinner"></span>Submitting permits…';
+      statusEl.textContent = '';
       downloadBtn.style.display = 'none';
-      isProcessing = true;
 
+      // Get and clean input
       const rawInput = textarea.value.trim();
-      if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; statusEl.textContent = ''; isProcessing = false; return; }
+      if (!rawInput) {
+        errorEl.textContent = 'Please enter at least one permit number.';
+        return;
+      }
 
-      // Accept all input lines without validation
+      // Split by new lines
       const permits = rawInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 
-      try {
-        const response = await fetch('/api/submitPermits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
-          body: JSON.stringify({ permits })
-        });
-        if (!response.ok) throw new Error('Workflow request failed.');
-        const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
+      // Show status
+      statusEl.textContent = 'Submitting permits…';
 
+      try {
+        // Call the webhook
+        const url = `${webhookURL}?permitNumbers=${encodeURIComponent(permits.join('\n'))}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Workflow request failed.');
+
+        statusEl.textContent = 'Processing permits… please wait.';
+
+        // Expect CSV file as response
+        const blob = await response.blob();
+
+        // Create downloadable link
+        const downloadUrl = URL.createObjectURL(blob);
         downloadBtn.style.display = 'inline-block';
         downloadBtn.onclick = () => {
           const a = document.createElement('a');
           a.href = downloadUrl;
-          a.download = 'permit_report.csv';
+          a.download = 'permit_report_hillsborough.csv';
           a.click();
           URL.revokeObjectURL(downloadUrl);
         };
@@ -208,9 +169,6 @@
       } catch (err) {
         console.error(err);
         errorEl.textContent = 'Error: ' + err.message;
-        statusEl.textContent = '';
-      } finally {
-        isProcessing = false;
       }
     });
   </script>

@@ -243,13 +243,36 @@
     </div>
   </div>
 
+  <!-- PERMIT FORM -->
+  <div class="container" id="permitContainer" style="display:none;">
+    <h1 id="permitHeader">Clearwater Permit Search</h1>
+    <p>Paste permit numbers below, one per line.</p>
+    <div id="error"></div>
+    <form id="permitForm">
+      <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..."></textarea>
+      <div class="quick-guide">
+        <strong>Quick Guide:</strong>
+        <ol>
+          <li>Enter one permit number per line.</li>
+          <li>You can paste up to 100 lines at once.</li>
+          <li>Click "Generate CSV Report" to submit the permits.</li>
+          <li>Once processing is complete, click "Download CSV" to save your report.</li>
+        </ol>
+      </div>
+      <button type="submit">Generate CSV Report</button>
+    </form>
+    <div id="status"></div>
+    <button id="downloadBtn">Download CSV</button>
+  </div>
+
 </div>
 
 <footer>ai System Made by ai8mations.</footer>
 <button id="logoutBtn" style="display:none;">Logout</button>
+<button id="backBtn" style="display:none;">Back</button>
 
 <script>
-let authToken = null;
+let authToken = localStorage.getItem('authToken');
 
 // Elements
 const loginContainerWrapper = document.getElementById('loginContainerWrapper');
@@ -258,15 +281,14 @@ const permitContainer = document.getElementById('permitContainer');
 const loginBtn = document.getElementById('loginBtn');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
+const backBtn = document.getElementById('backBtn');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const pageWrapper = document.getElementById('pageWrapper');
 const locationCards = document.querySelectorAll('.location-card');
 
-// Check for existing auth token on page load
-const storedToken = localStorage.getItem('authToken');
-if (storedToken) {
-  authToken = storedToken;
+// Check if already logged in
+if (authToken) {
   loginContainerWrapper.style.display = 'none';
   locationsContainer.style.display = 'block';
   logoutBtn.style.display = 'block';
@@ -289,11 +311,11 @@ function performLogin() {
   .then(data => {
     if (data.error) throw new Error(data.error);
     authToken = data.token;
+    localStorage.setItem('authToken', authToken);
 
     // Fade out login + video
     loginContainerWrapper.style.transition = 'opacity 0.5s ease';
     loginContainerWrapper.style.opacity = '0';
-    localStorage.setItem('authToken', authToken);
     setTimeout(() => {
       loginContainerWrapper.style.display = 'none';
       locationsContainer.style.display = 'block';
@@ -317,11 +339,17 @@ logoutBtn.addEventListener('click', () => {
   authToken = null;
   localStorage.removeItem('authToken');
   locationsContainer.style.display = 'none';
+  permitContainer.style.display = 'none';
   loginContainerWrapper.style.display = 'flex';
   loginContainerWrapper.style.opacity = '1';
   logoutBtn.style.display = 'none';
+  backBtn.style.display = 'none';
   usernameInput.value = '';
   passwordInput.value = '';
+  document.getElementById('permitNumbersInput').value = '';
+  document.getElementById('status').textContent = '';
+  document.getElementById('error').textContent = '';
+  document.getElementById('downloadBtn').style.display = 'none';
   pageWrapper.style.justifyContent = 'center';
 });
 
@@ -333,6 +361,58 @@ locationCards.forEach(card => {
   });
 });
 
+// --- BACK BUTTON ---
+backBtn.addEventListener('click', () => {
+  permitContainer.style.display = 'none';
+  backBtn.style.display = 'none';
+  locationsContainer.style.display = 'block';
+});
+
+// --- PERMIT FORM ---
+const form = document.getElementById('permitForm');
+const textarea = document.getElementById('permitNumbersInput');
+const statusEl = document.getElementById('status');
+const errorEl = document.getElementById('error');
+const downloadBtn = document.getElementById('downloadBtn');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  errorEl.textContent = '';
+  statusEl.innerHTML = '<span class="spinner"></span>Submitting permits…';
+  downloadBtn.style.display = 'none';
+
+  const rawInput = textarea.value.trim();
+  if (!rawInput) { errorEl.textContent = 'Please enter at least one permit number.'; statusEl.textContent = ''; return; }
+
+  // Accept all input lines without validation
+  const permits = rawInput.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+
+  try {
+    const response = await fetch('/api/submitPermits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+      body: JSON.stringify({ permits })
+    });
+    if (!response.ok) throw new Error('Workflow request failed.');
+    const blob = await response.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+
+    downloadBtn.style.display = 'inline-block';
+    downloadBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'permit_report.csv';
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+    };
+
+    statusEl.textContent = 'Report ready. Click below to download.';
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Error: ' + err.message;
+    statusEl.textContent = '';
+  }
+});
 </script>
 </body>
 </html>
