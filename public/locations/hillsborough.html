@@ -120,6 +120,13 @@
       window.location.href = '../index.html';
     });
 
+    // --- BEFORE UNLOAD WARNING ---
+    window.addEventListener('beforeunload', function(e) {
+      e.preventDefault();
+      e.returnValue = 'A report is currently being generated. You will lose your session if you close/refresh your browser.';
+      return e.returnValue;
+    });
+
     // Change this to your running workflow's webhook URL
     const webhookURL = 'https://n8n.ai8mations.com/webhook/hillsborough';
 
