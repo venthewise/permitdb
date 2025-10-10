@@ -106,6 +106,18 @@
      color: #353b47;
      text-align: center;
    }
+
+   /* BACK BUTTON */
+   button#backBtn {
+     background-color: #6b7280;
+     color: #fff;
+     position: fixed;
+     top: 20px;
+     left: 20px;
+     z-index: 10;
+     transition: transform 0.2s ease, background-color 0.2s ease;
+   }
+   button#backBtn:hover { background-color: #4b5563; transform: scale(1.05); }
   </style>
 </head>
 <body>
@@ -131,6 +143,7 @@
   </div>
 
   <footer>ai System Made by ai8mations.</footer>
+  <button id="backBtn">Back to Locations</button>
   <script>
     let isProcessing = false;
 
@@ -141,6 +154,10 @@
     const downloadBtn = document.getElementById('downloadBtn');
 
     const authToken = localStorage.getItem('authToken');
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.location.href = '/';
+    });
 
     window.addEventListener('beforeunload', (e) => {
       if (isProcessing) {
