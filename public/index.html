@@ -368,13 +368,6 @@ backBtn.addEventListener('click', () => {
   locationsContainer.style.display = 'block';
 });
 
-// --- BEFORE UNLOAD WARNING ---
-window.addEventListener('beforeunload', function(e) {
-  e.preventDefault();
-  e.returnValue = 'A report is currently being generated. You will lose your session if you close/refresh your browser.';
-  return e.returnValue;
-});
-
 // --- PERMIT FORM ---
 const form = document.getElementById('permitForm');
 const textarea = document.getElementById('permitNumbersInput');
