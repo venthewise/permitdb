@@ -75,6 +75,33 @@
       max-width: 100%;
       padding-left: 5px;
     }
+    button:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    #status.processing {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .spinner {
+      border: 3px solid rgba(37, 99, 235, 0.2);
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -115,6 +142,7 @@
     const errorEl = document.getElementById('error');
     const downloadBtn = document.getElementById('downloadBtn');
     const backBtn = document.getElementById('backBtn');
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     // Track if report is being generated
     let isGeneratingReport = false;
@@ -155,8 +183,13 @@
       // Start report generation
       isGeneratingReport = true;
 
-      // Show status
-      statusEl.textContent = 'Submitting permits…';
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating Report...';
+
+      // Show enhanced status with spinner
+      statusEl.className = 'processing';
+      statusEl.innerHTML = '<span class="spinner"></span>Submitting permits…';
 
       try {
         // Call the webhook
@@ -164,7 +197,7 @@
         const response = await fetch(url);
         if (!response.ok) throw new Error('Workflow request failed.');
 
-        statusEl.textContent = 'Processing permits… please wait.';
+        statusEl.innerHTML = '<span class="spinner"></span>Processing permits… please wait.';
 
         // Expect CSV file as response
         const blob = await response.blob();
@@ -180,13 +213,18 @@
           URL.revokeObjectURL(downloadUrl);
         };
 
+        statusEl.className = '';
         statusEl.textContent = 'Report ready. Click below to download.';
       } catch (err) {
         console.error(err);
         errorEl.textContent = 'Error: ' + err.message;
+        statusEl.className = '';
+        statusEl.textContent = '';
       } finally {
         // Report generation complete (success or error)
         isGeneratingReport = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Generate CSV Report';
       }
     });
   </script>
