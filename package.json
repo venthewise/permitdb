@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "@types/node": "^24.8.1"
+  },
+  "dependencies": {
+    "@vercel/edge-config": "^1.4.0"
   }
 }

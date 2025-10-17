@@ -55,8 +55,8 @@ module.exports = async function handler(req, res) {
   if (!location) return res.status(400).json({ error: 'Location required' });
 
   const jobId = generateJobId();
-  setJob(jobId, { status: 'processing' });
-  console.log(`Job created: ${jobId}. Current jobs:`, getAllJobs());
+  await setJob(jobId, { status: 'processing' });
+  console.log(`Job created: ${jobId}`);
 
   // Start async processing
   processPermitsAsync(jobId, permits, location);

@@ -17,8 +17,8 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  console.log(`Checking for job: ${jobId}. Current jobs:`, getAllJobs());
-  const job = getJob(jobId);
+  console.log(`Checking for job: ${jobId}`);
+  const job = await getJob(jobId);
   if (!job) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Job not found' }));
@@ -42,5 +42,5 @@ module.exports = async function handler(req, res) {
     'Content-Type': 'text/csv',
     'Content-Disposition': 'attachment; filename=permit_report.csv'
   });
-  res.end(job.csvData);
+  res.end(Buffer.from(job.csvData, 'base64'));
 }
