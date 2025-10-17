@@ -1,7 +1,7 @@
 // api/downloadStatus.js
 const { getJob } = require('./jobStore');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Method not allowed' }));
