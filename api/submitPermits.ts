@@ -1,8 +1,6 @@
 // api/submitPermits.ts
 import * as crypto from 'crypto';
-
-// In-memory job store (use Redis or DB in production)
-const jobs: { [key: string]: { status: 'processing' | 'completed' | 'failed'; csvData?: Buffer; error?: string } } = {};
+import { setJob } from './jobStore';
 
 function generateJobId(): string {
   return crypto.randomBytes(16).toString('hex');
@@ -39,10 +37,10 @@ async function processPermitsAsync(jobId: string, permits: string[], location: s
     const blob = await response.blob();
     const buffer = Buffer.from(await blob.arrayBuffer());
 
-    jobs[jobId] = { status: 'completed', csvData: buffer };
+    setJob(jobId, { status: 'completed', csvData: buffer });
   } catch (err) {
     console.error(err);
-    jobs[jobId] = { status: 'failed', error: err instanceof Error ? err.message : 'Unknown error' };
+    setJob(jobId, { status: 'failed', error: err instanceof Error ? err.message : 'Unknown error' });
   }
 }
 
@@ -57,7 +55,7 @@ export default async function handler(req, res) {
   if (!location) return res.status(400).json({ error: 'Location required' });
 
   const jobId = generateJobId();
-  jobs[jobId] = { status: 'processing' };
+  setJob(jobId, { status: 'processing' });
 
   // Start async processing
   processPermitsAsync(jobId, permits, location);

@@ -1,9 +1,6 @@
 // api/downloadStatus.ts
 import { IncomingMessage, ServerResponse } from 'http';
-import * as crypto from 'crypto';
-
-// Shared job store (same as in submitPermits.ts)
-const jobs: { [key: string]: { status: 'processing' | 'completed' | 'failed'; csvData?: Buffer; error?: string } } = {};
+import { getJob } from './jobStore';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'GET') {
@@ -21,7 +18,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const job = jobs[jobId];
+  const job = getJob(jobId);
   if (!job) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Job not found' }));
