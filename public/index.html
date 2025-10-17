@@ -331,6 +331,25 @@
 let authToken = localStorage.getItem('authToken');
 let selectedFolderHandle = null;
 let autoDownload = localStorage.getItem('autoDownload') === 'true';
+let selectedLocation = null;
+let locationWebhookUrls = {
+  clearwater: 'https://n8n.ai8mations.com/webhook/cwater',
+  northport: 'https://n8n.ai8mations.com/webhook/northport',
+  pasco: 'https://n8n.ai8mations.com/webhook/pasco',
+  tampa: 'https://n8n.ai8mations.com/webhook/tampa',
+  bradenton: 'https://n8n.ai8mations.com/webhook/bradenton',
+  hillsborough: 'https://n8n.ai8mations.com/webhook/hillsborough',
+  polkcounty: 'https://n8n.ai8mations.com/webhook/polkcounty',
+  charlotte: 'https://n8n.ai8mations.com/webhook/charlotte',
+  atlanta: 'https://n8n.ai8mations.com/webhook/atlanta',
+  citruscounty: 'https://n8n.ai8mations.com/webhook/citruscounty',
+  fortworth: 'https://n8n.ai8mations.com/webhook/fortworth',
+  lakealfred: 'https://n8n.ai8mations.com/webhook/lakealfred',
+  leoncounty: 'https://n8n.ai8mations.com/webhook/leoncounty',
+  sanantonio: 'https://n8n.ai8mations.com/webhook/sanantonio',
+  sarasota: 'https://n8n.ai8mations.com/webhook/sarasota',
+  weston: 'https://n8n.ai8mations.com/webhook/weston'
+};
 
 // Elements
 const loginContainerWrapper = document.getElementById('loginContainerWrapper');
@@ -516,8 +535,12 @@ function updateLastSettingsDisplay() {
 // --- LOCATION CARDS ---
 locationCards.forEach(card => {
   card.addEventListener('click', () => {
-    const location = card.dataset.location;
-    window.location.href = `locations/${location}.html`;
+    selectedLocation = card.dataset.location;
+    const locationName = card.textContent.trim();
+    document.getElementById('permitHeader').textContent = `${locationName} Permit Search`;
+    locationsContainer.style.display = 'none';
+    permitContainer.style.display = 'block';
+    backBtn.style.display = 'block';
   });
 });
 
@@ -526,6 +549,11 @@ backBtn.addEventListener('click', () => {
   permitContainer.style.display = 'none';
   backBtn.style.display = 'none';
   locationsContainer.style.display = 'block';
+  selectedLocation = null;
+  document.getElementById('permitNumbersInput').value = '';
+  document.getElementById('status').textContent = '';
+  document.getElementById('error').textContent = '';
+  document.getElementById('downloadBtn').style.display = 'none';
 });
 
 // --- PERMIT FORM ---
@@ -551,7 +579,7 @@ form.addEventListener('submit', async e => {
     const response = await fetch('/api/submitPermits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
-      body: JSON.stringify({ permits })
+      body: JSON.stringify({ permits, location: selectedLocation })
     });
     if (!response.ok) throw new Error('Submission failed.');
     const data = await response.json();
