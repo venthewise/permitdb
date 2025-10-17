@@ -188,6 +188,33 @@
   }
   #backBtn:hover { background-color: #4b5563; transform: scale(1.05); }
 
+  /* SETTINGS */
+  .settings-container {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+  }
+  .settings-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .settings-toggle input { margin-right: 10px; }
+  .settings-btn {
+    background-color: #6b7280;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .settings-btn:hover { background-color: #4b5563; }
+
   /* FOOTER */
   footer {
     font-size: 14px;
@@ -248,6 +275,18 @@
     <h1 id="permitHeader">Clearwater Permit Search</h1>
     <p>Paste permit numbers below, one per line.</p>
     <div id="error"></div>
+
+    <!-- SETTINGS -->
+    <div class="settings-container">
+      <h3>Download Settings</h3>
+      <div class="settings-toggle">
+        <input type="checkbox" id="autoDownloadToggle">
+        <label for="autoDownloadToggle">Auto-download CSV when ready</label>
+      </div>
+      <button class="settings-btn" id="selectFolderBtn">Select Download Folder</button>
+      <div id="selectedFolder"></div>
+    </div>
+
     <form id="permitForm">
       <textarea id="permitNumbersInput" name="permitNumbers" placeholder="BCP2025-090576&#10;BCP2025-090623&#10;..."></textarea>
       <div class="quick-guide">
@@ -255,8 +294,10 @@
         <ol>
           <li>Enter one permit number per line.</li>
           <li>You can paste up to 100 lines at once.</li>
+          <li>Configure download settings above if desired.</li>
           <li>Click "Generate CSV Report" to submit the permits.</li>
-          <li>Once processing is complete, click "Download CSV" to save your report.</li>
+          <li>If auto-download is enabled, the file will download automatically when ready.</li>
+          <li>Otherwise, click "Download CSV" once processing completes.</li>
         </ol>
       </div>
       <button type="submit">Generate CSV Report</button>
@@ -273,6 +314,8 @@
 
 <script>
 let authToken = localStorage.getItem('authToken');
+let selectedFolderHandle = null;
+let autoDownload = localStorage.getItem('autoDownload') === 'true';
 
 // Elements
 const loginContainerWrapper = document.getElementById('loginContainerWrapper');
@@ -286,6 +329,9 @@ const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const pageWrapper = document.getElementById('pageWrapper');
 const locationCards = document.querySelectorAll('.location-card');
+const autoDownloadToggle = document.getElementById('autoDownloadToggle');
+const selectFolderBtn = document.getElementById('selectFolderBtn');
+const selectedFolder = document.getElementById('selectedFolder');
 
 // Check if already logged in
 if (authToken) {
@@ -294,6 +340,10 @@ if (authToken) {
   logoutBtn.style.display = 'block';
   pageWrapper.style.justifyContent = 'flex-start';
 }
+
+// Initialize settings
+autoDownloadToggle.checked = autoDownload;
+updateSelectedFolderDisplay();
 
 // --- LOGIN FUNCTION ---
 function performLogin() {
@@ -353,6 +403,31 @@ logoutBtn.addEventListener('click', () => {
   pageWrapper.style.justifyContent = 'center';
 });
 
+// --- SETTINGS ---
+autoDownloadToggle.addEventListener('change', () => {
+  autoDownload = autoDownloadToggle.checked;
+  localStorage.setItem('autoDownload', autoDownload.toString());
+});
+
+selectFolderBtn.addEventListener('click', async () => {
+  try {
+    if ('showDirectoryPicker' in window) {
+      selectedFolderHandle = await window.showDirectoryPicker();
+      localStorage.setItem('selectedFolderName', selectedFolderHandle.name);
+      updateSelectedFolderDisplay();
+    } else {
+      alert('File System Access API not supported in this browser. Downloads will use default browser behavior.');
+    }
+  } catch (err) {
+    console.error('Folder selection cancelled or failed:', err);
+  }
+});
+
+function updateSelectedFolderDisplay() {
+  const folderName = localStorage.getItem('selectedFolderName');
+  selectedFolder.textContent = folderName ? `Selected folder: ${folderName}` : 'No folder selected (will use browser default)';
+}
+
 // --- LOCATION CARDS ---
 locationCards.forEach(card => {
   card.addEventListener('click', () => {
@@ -393,26 +468,80 @@ form.addEventListener('submit', async e => {
       headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
       body: JSON.stringify({ permits })
     });
-    if (!response.ok) throw new Error('Workflow request failed.');
-    const blob = await response.blob();
-    const downloadUrl = URL.createObjectURL(blob);
+    if (!response.ok) throw new Error('Submission failed.');
+    const data = await response.json();
 
-    downloadBtn.style.display = 'inline-block';
-    downloadBtn.onclick = () => {
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = 'permit_report.csv';
-      a.click();
-      URL.revokeObjectURL(downloadUrl);
-    };
-
-    statusEl.textContent = 'Report ready. Click below to download.';
+    if (autoDownload) {
+      statusEl.innerHTML = '<span class="spinner"></span>Processing… Auto-download will start when ready.';
+      pollForDownload(data.jobId);
+    } else {
+      statusEl.textContent = 'Processing… Click below to download when ready.';
+      downloadBtn.style.display = 'inline-block';
+      downloadBtn.onclick = () => downloadFile(data.jobId);
+    }
   } catch (err) {
     console.error(err);
     errorEl.textContent = 'Error: ' + err.message;
     statusEl.textContent = '';
   }
 });
+
+async function pollForDownload(jobId) {
+  const pollInterval = setInterval(async () => {
+    try {
+      const response = await fetch(`/api/downloadStatus?jobId=${jobId}`);
+      if (response.status === 202) return; // Still processing
+      if (!response.ok) throw new Error('Download failed.');
+
+      clearInterval(pollInterval);
+      await saveToSelectedFolder(await response.blob());
+      statusEl.textContent = 'Download completed!';
+    } catch (err) {
+      clearInterval(pollInterval);
+      console.error(err);
+      errorEl.textContent = 'Error: ' + err.message;
+      statusEl.textContent = '';
+    }
+  }, 2000); // Poll every 2 seconds
+}
+
+async function downloadFile(jobId) {
+  try {
+    const response = await fetch(`/api/downloadStatus?jobId=${jobId}`);
+    if (!response.ok) throw new Error('Download failed.');
+    await saveToSelectedFolder(await response.blob());
+    statusEl.textContent = 'Download completed!';
+    downloadBtn.style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    errorEl.textContent = 'Error: ' + err.message;
+  }
+}
+
+async function saveToSelectedFolder(blob) {
+  if (selectedFolderHandle && 'createWritable' in selectedFolderHandle) {
+    try {
+      const fileHandle = await selectedFolderHandle.getFileHandle('permit_report.csv', { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    } catch (err) {
+      console.error('Failed to save to selected folder, falling back to download:', err);
+      fallbackDownload(blob);
+    }
+  } else {
+    fallbackDownload(blob);
+  }
+}
+
+function fallbackDownload(blob) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = 'permit_report.csv';
+  a.click();
+  URL.revokeObjectURL(downloadUrl);
+}
 </script>
 </body>
 </html>
