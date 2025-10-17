@@ -250,6 +250,21 @@
   <!-- LOCATIONS PAGE -->
   <div class="container" id="locationsContainer" style="display:none;">
     <h1 id="locationsHeader">Permit Search Locations</h1>
+
+    <!-- GLOBAL DOWNLOAD SETTINGS -->
+    <div class="settings-container">
+      <h3>Download Settings</h3>
+      <div class="settings-toggle">
+        <input type="checkbox" id="globalAutoDownloadToggle">
+        <label for="globalAutoDownloadToggle">Auto-download CSV when ready</label>
+      </div>
+      <button class="settings-btn" id="globalSelectFolderBtn">Select Download Folder</button>
+      <div id="globalSelectedFolder"></div>
+      <button class="settings-btn" id="saveSettingsBtn">Save Settings</button>
+      <div id="settingsStatus"></div>
+      <div id="lastSettingsUpdate"></div>
+    </div>
+
     <div class="locations-grid">
       <div class="location-card" data-location="clearwater">Clearwater</div>
       <div class="location-card" data-location="northport">North Port</div>
@@ -332,6 +347,12 @@ const locationCards = document.querySelectorAll('.location-card');
 const autoDownloadToggle = document.getElementById('autoDownloadToggle');
 const selectFolderBtn = document.getElementById('selectFolderBtn');
 const selectedFolder = document.getElementById('selectedFolder');
+const globalAutoDownloadToggle = document.getElementById('globalAutoDownloadToggle');
+const globalSelectFolderBtn = document.getElementById('globalSelectFolderBtn');
+const globalSelectedFolder = document.getElementById('globalSelectedFolder');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const settingsStatus = document.getElementById('settingsStatus');
+const lastSettingsUpdate = document.getElementById('lastSettingsUpdate');
 
 // Check if already logged in
 if (authToken) {
@@ -344,6 +365,9 @@ if (authToken) {
 // Initialize settings
 autoDownloadToggle.checked = autoDownload;
 updateSelectedFolderDisplay();
+globalAutoDownloadToggle.checked = autoDownload;
+updateGlobalSelectedFolderDisplay();
+updateLastSettingsDisplay();
 
 // --- LOGIN FUNCTION ---
 function performLogin() {
@@ -423,9 +447,70 @@ selectFolderBtn.addEventListener('click', async () => {
   }
 });
 
+// --- GLOBAL SETTINGS ---
+globalAutoDownloadToggle.addEventListener('change', () => {
+  autoDownload = globalAutoDownloadToggle.checked;
+  localStorage.setItem('autoDownload', autoDownload.toString());
+  settingsStatus.textContent = 'Settings changed. Click "Save Settings" to persist.';
+  settingsStatus.style.color = '#f59e0b';
+});
+
+globalSelectFolderBtn.addEventListener('click', async () => {
+  try {
+    if ('showDirectoryPicker' in window) {
+      selectedFolderHandle = await window.showDirectoryPicker();
+      localStorage.setItem('selectedFolderName', selectedFolderHandle.name);
+      updateGlobalSelectedFolderDisplay();
+      settingsStatus.textContent = 'Settings changed. Click "Save Settings" to persist.';
+      settingsStatus.style.color = '#f59e0b';
+    } else {
+      alert('File System Access API not supported in this browser. Downloads will use default browser behavior.');
+    }
+  } catch (err) {
+    console.error('Folder selection cancelled or failed:', err);
+  }
+});
+
+saveSettingsBtn.addEventListener('click', () => {
+  const settings = {
+    autoDownload: globalAutoDownloadToggle.checked,
+    folderName: localStorage.getItem('selectedFolderName') || null,
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem('lastSettingsUpdate', JSON.stringify(settings));
+  localStorage.setItem('autoDownload', settings.autoDownload.toString());
+  autoDownload = settings.autoDownload;
+  updateLastSettingsDisplay();
+  settingsStatus.textContent = 'Settings saved successfully!';
+  settingsStatus.style.color = '#10b981';
+  setTimeout(() => {
+    settingsStatus.textContent = '';
+  }, 3000);
+});
+
 function updateSelectedFolderDisplay() {
   const folderName = localStorage.getItem('selectedFolderName');
   selectedFolder.textContent = folderName ? `Selected folder: ${folderName}` : 'No folder selected (will use browser default)';
+}
+
+function updateGlobalSelectedFolderDisplay() {
+  const folderName = localStorage.getItem('selectedFolderName');
+  globalSelectedFolder.textContent = folderName ? `Selected folder: ${folderName}` : 'No folder selected (will use browser default)';
+}
+
+function updateLastSettingsDisplay() {
+  const lastUpdate = localStorage.getItem('lastSettingsUpdate');
+  if (lastUpdate) {
+    const settings = JSON.parse(lastUpdate);
+    const date = new Date(settings.timestamp).toLocaleString();
+    lastSettingsUpdate.innerHTML = `
+      <strong>Last updated:</strong> ${date}<br>
+      <strong>Download path:</strong> ${settings.folderName || 'Browser default'}<br>
+      <strong>Auto-download:</strong> ${settings.autoDownload ? 'ON' : 'OFF'}
+    `;
+  } else {
+    lastSettingsUpdate.innerHTML = '<em>No settings saved yet</em>';
+  }
 }
 
 // --- LOCATION CARDS ---
