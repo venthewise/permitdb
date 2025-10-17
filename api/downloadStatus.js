@@ -1,5 +1,5 @@
 // api/downloadStatus.js
-const { getJob } = require('./jobStore');
+const { getJob, getAllJobs } = require('./jobStore');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -17,6 +17,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  console.log(`Checking for job: ${jobId}. Current jobs:`, getAllJobs());
   const job = getJob(jobId);
   if (!job) {
     res.writeHead(404, { 'Content-Type': 'application/json' });

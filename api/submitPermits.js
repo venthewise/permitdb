@@ -1,6 +1,6 @@
 // api/submitPermits.js
 const crypto = require('crypto');
-const { setJob } = require('./jobStore');
+const { setJob, getAllJobs } = require('./jobStore');
 
 function generateJobId() {
   return crypto.randomBytes(16).toString('hex');
@@ -56,6 +56,7 @@ module.exports = async function handler(req, res) {
 
   const jobId = generateJobId();
   setJob(jobId, { status: 'processing' });
+  console.log(`Job created: ${jobId}. Current jobs:`, getAllJobs());
 
   // Start async processing
   processPermitsAsync(jobId, permits, location);
