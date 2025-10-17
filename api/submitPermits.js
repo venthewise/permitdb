@@ -1,14 +1,14 @@
-// api/submitPermits.ts
-import * as crypto from 'crypto';
-import { setJob } from './jobStore';
+// api/submitPermits.js
+const crypto = require('crypto');
+const { setJob } = require('./jobStore');
 
-function generateJobId(): string {
+function generateJobId() {
   return crypto.randomBytes(16).toString('hex');
 }
 
-async function processPermitsAsync(jobId: string, permits: string[], location: string) {
+async function processPermitsAsync(jobId, permits, location) {
   try {
-    const locationWebhookUrls: { [key: string]: string } = {
+    const locationWebhookUrls = {
       clearwater: 'https://n8n.ai8mations.com/webhook/cwater',
       northport: 'https://n8n.ai8mations.com/webhook/northport',
       pasco: 'https://n8n.ai8mations.com/webhook/pasco',
@@ -40,7 +40,7 @@ async function processPermitsAsync(jobId: string, permits: string[], location: s
     setJob(jobId, { status: 'completed', csvData: buffer });
   } catch (err) {
     console.error(err);
-    setJob(jobId, { status: 'failed', error: err instanceof Error ? err.message : 'Unknown error' });
+    setJob(jobId, { status: 'failed', error: err.message || 'Unknown error' });
   }
 }
 
