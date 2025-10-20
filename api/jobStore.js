@@ -22,8 +22,11 @@ async function setJob(jobId, job) {
     }
 
     if (client) {
-      await client.set(jobId, job);
-      console.log(`Successfully set job ${jobId} in Edge Config.`);
+      // Edge Config doesn't have a set method, we need to use digest
+      // For now, fall back to in-memory storage even in production
+      console.log(`Edge Config client doesn't support set method, using in-memory storage for ${jobId}`);
+      inMemoryStore[jobId] = job;
+      console.log(`Successfully set job ${jobId} in memory (fallback).`);
     } else {
       inMemoryStore[jobId] = job;
       console.log(`Successfully set job ${jobId} in memory.`);
