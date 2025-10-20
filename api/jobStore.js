@@ -1,26 +1,53 @@
 // api/jobStore.js
 const { createClient } = require('@vercel/edge-config');
 
-const client = createClient(process.env.EDGE_CONFIG);
+// Use in-memory storage for local development
+let inMemoryStore = {};
+
+const client = process.env.EDGE_CONFIG ? createClient(process.env.EDGE_CONFIG) : null;
 
 async function getJob(jobId) {
-  return await client.get(jobId);
+  if (client) {
+    return await client.get(jobId);
+  } else {
+    return inMemoryStore[jobId] || null;
+  }
 }
 
 async function setJob(jobId, job) {
-  // Edge Config can't store Buffers, so we'll store the CSV as a base64 string
-  if (job.csvData) {
-    job.csvData = job.csvData.toString('base64');
+  try {
+    // Edge Config can't store Buffers, so we'll store the CSV as a base64 string
+    if (job.csvData) {
+      job.csvData = job.csvData.toString('base64');
+    }
+
+    if (client) {
+      await client.set(jobId, job);
+      console.log(`Successfully set job ${jobId} in Edge Config.`);
+    } else {
+      inMemoryStore[jobId] = job;
+      console.log(`Successfully set job ${jobId} in memory.`);
+    }
+  } catch (error) {
+    console.error(`Error setting job ${jobId}:`, error);
+    throw error; // Re-throw the error to be caught by the calling function
   }
-  return await client.set(jobId, job);
 }
 
 async function deleteJob(jobId) {
-  return await client.delete(jobId);
+  if (client) {
+    return await client.delete(jobId);
+  } else {
+    delete inMemoryStore[jobId];
+  }
 }
 
 async function getAllJobs() {
-  return await client.getAll();
+  if (client) {
+    return await client.getAll();
+  } else {
+    return inMemoryStore;
+  }
 }
 
 module.exports = { getJob, setJob, deleteJob, getAllJobs };

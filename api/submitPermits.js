@@ -47,20 +47,25 @@ async function processPermitsAsync(jobId, permits, location) {
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const token = req.headers['x-auth-token'];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const token = req.headers['x-auth-token'];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { permits, location } = req.body;
-  if (!permits || !Array.isArray(permits)) return res.status(400).json({ error: 'Invalid input' });
-  if (!location) return res.status(400).json({ error: 'Location required' });
+    const { permits, location } = req.body;
+    if (!permits || !Array.isArray(permits)) return res.status(400).json({ error: 'Invalid input' });
+    if (!location) return res.status(400).json({ error: 'Location required' });
 
-  const jobId = generateJobId();
-  await setJob(jobId, { status: 'processing' });
-  console.log(`Job created: ${jobId}`);
+    const jobId = generateJobId();
+    await setJob(jobId, { status: 'processing' });
+    console.log(`Job created: ${jobId}`);
 
-  // Start async processing
-  processPermitsAsync(jobId, permits, location);
+    // Start async processing but don't wait for it
+    processPermitsAsync(jobId, permits, location);
 
-  // Return job ID immediately
-  res.status(202).json({ status: 'processing', jobId });
+    // Return job ID immediately
+    res.status(202).json({ status: 'processing', jobId });
+  } catch (error) {
+    console.error('Error in submitPermits handler:', error);
+    res.status(500).json({ error: 'Failed to create job.' });
+  }
 }
